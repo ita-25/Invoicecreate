@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Technologies - Professional Invoice Generator</title>
+    <style>
+/* ==================== RESET & BASE ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* ==================== TOOLBAR ==================== */
+.toolbar {
+    background: #2c3e50;
+    padding: 15px 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn {
+    padding: 11px 22px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-print {
+    background: #3498db;
+    color: white;
+}
+
+.btn-print:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.btn-save {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.btn-load {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-load:hover {
+    background: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+}
+
+.btn-new {
+    background: #9b59b6;
+    color: white;
+}
+
+.btn-new:hover {
+    background: #8e44ad;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4);
+}
+
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-input-wrapper input[type=file] {
+    position: absolute;
+    left: -9999px;
+}
+
+.file-input-label {
+    padding: 11px 22px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-input-label:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+/* ==================== INVOICE PAGE ==================== */
+.page-wrapper {
+    max-width: 210mm;
+    margin: 20px auto;
+    background: white;
+    padding: 15mm 20mm;
+    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    min-height: 297mm;
+    position: relative;
+}
+
+/* ==================== HEADER SECTION ==================== */
+.invoice-header {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 30px;
+    margin-bottom: 35px;
+    align-items: start;
+}
+
+.header-left {
+    flex: 1;
+}
+
+.invoice-title {
+    font-size: 40px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 25px;
+    letter-spacing: -0.5px;
+}
+
+.company-info {
+    font-size: 13px;
+    line-height: 1.9;
+    color: #4a4a4a;
+}
+
+.company-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+.header-right {
+    width: 220px;
+    flex-shrink: 0;
+}
+
+.logo-wrapper {
+    width: 220px;
+    height: 130px;
+    border: 2px dashed #d0d0d0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    overflow: hidden;
+    position: relative;
+}
+
+.logo-placeholder {
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+    padding: 15px;
+    line-height: 1.6;
+}
+
+#companyLogo {
+    display: none;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+#companyLogo.show {
+    display: block;
+}
+
+/* ==================== INFO GRID ==================== */
+.info-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 35px;
+    margin-bottom: 25px;
+}
+
+.info-block h3 {
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 1.2px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.field-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 6px 0;
+    font-size: 14px;
+    color: #1a1a1a;
+    font-family: inherit;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.field-input::placeholder {
+    color: #bbb;
+}
+
+.field-input:hover {
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.field-input:focus {
+    border-bottom: 1px solid #3498db;
+    background: #f9f9f9;
+}
+
+.field-input.strong {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.info-right {
+    text-align: right;
+}
+
+.detail-line {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 12px;
+}
+
+.detail-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.detail-line .field-input {
+    max-width: 160px;
+    text-align: right;
+}
+
+/* ==================== ITEMS TABLE ==================== */
+.items-section {
+    margin: 30px 0 20px 0;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 15px;
+}
+
+.items-table thead {
+    background: #f5f5f5;
+}
+
+.items-table th {
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    color: #666;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #ddd;
+}
+
+.items-table th:first-child {
+    border-radius: 6px 0 0 0;
+}
+
+.items-table th:last-child {
+    border-radius: 0 6px 0 0;
+}
+
+/* Fixed column widths for perfect alignment */
+.col-item { width: 38%; }
+.col-price { width: 14%; text-align: right; padding-right: 15px !important; }
+.col-qty { width: 10%; text-align: center; }
+.col-discount { width: 14%; text-align: right; padding-right: 15px !important; }
+.col-amount { width: 16%; text-align: right; padding-right: 15px !important; }
+.col-actions { width: 8%; text-align: center; }
+
+.items-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.items-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.items-table td {
+    padding: 14px 12px;
+    vertical-align: top;
+}
+
+.item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.item-name-input {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a1a;
+}
+
+.item-desc-input {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.cell-input {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 6px 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1a1a1a;
+    border-radius: 4px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.cell-input::placeholder {
+    color: #ccc;
+}
+
+.cell-input:hover {
+    border-color: #e8e8e8;
+    background: #fafafa;
+}
+
+.cell-input:focus {
+    border-color: #3498db;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.cell-textarea {
+    resize: vertical;
+    min-height: 45px;
+    max-height: 120px;
+}
+
+.align-right {
+    text-align: right;
+}
+
+.align-center {
+    text-align: center;
+}
+
+.number-input {
+    text-align: right;
+}
+
+.qty-input {
+    text-align: center;
+}
+
+.amount-display {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a1a;
+    padding-right: 15px;
+}
+
+.btn-remove {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-remove:hover {
+    background: #c0392b;
+    transform: scale(1.05);
+}
+
+/* ==================== ADD ITEM ==================== */
+.btn-add-item {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 12px 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 15px 0 25px 0;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-add-item:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* ==================== TOTALS ==================== */
+.totals-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.totals-box {
+    width: 380px;
+}
+
+.totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 11px 0;
+    font-size: 14px;
+}
+
+.totals-row.subtotal-row {
+    color: #666;
+}
+
+.totals-row.total-row {
+    color: #666;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 14px;
+    margin-bottom: 6px;
+}
+
+.totals-row.due-row {
+    font-size: 19px;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding-top: 14px;
+}
+
+.amount-value {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+/* ==================== PRINT OPTIMIZATION ==================== */
+@media print {
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+
+    .toolbar {
+        display: none !important;
+    }
+
+    .page-wrapper {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+        min-height: 0;
+        page-break-after: avoid;
+    }
+
+    .invoice-header {
+        page-break-inside: avoid;
+        margin-bottom: 25px;
+    }
+
+    .info-container {
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+
+    .items-section {
+        margin: 20px 0 15px 0;
+    }
+
+    .items-table {
+        page-break-inside: auto;
+        margin-bottom: 10px;
+    }
+
+    .items-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .items-table thead {
+        display: table-header-group;
+    }
+
+    .items-table tbody {
+        display: table-row-group;
+    }
+
+    .field-input,
+    .cell-input {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .btn-remove,
+    .btn-add-item,
+    .col-actions {
+        display: none !important;
+    }
+
+    .items-table td:last-child {
+        display: none !important;
+    }
+
+    .totals-container {
+        page-break-inside: avoid;
+        margin-top: 15px;
+        padding-top: 15px;
+    }
+
+    /* Compact spacing for print */
+    .items-table th,
+    .items-table td {
+        padding: 10px 12px;
+    }
+
+    .totals-row {
+        padding: 8px 0;
+    }
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media screen and (max-width: 768px) {
+    body {
+        background: white;
+    }
+
+    .toolbar {
+        position: relative;
+        padding: 12px;
+    }
+
+    .page-wrapper {
+        margin: 0;
+        padding: 20px;
+        box-shadow: none;
+        min-height: auto;
+    }
+
+    .invoice-header {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .header-right {
+        width: 100%;
+    }
+
+    .logo-wrapper {
+        width: 180px;
+        height: 110px;
+    }
+
+    .invoice-title {
+        font-size: 32px;
+    }
+
+    .info-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .info-right {
+        text-align: left;
+    }
+
+    .detail-line {
+        justify-content: flex-start;
+    }
+
+    .detail-line .field-input {
+        text-align: left;
+    }
+
+    .items-table {
+        font-size: 12px;
+    }
+
+    .items-table th,
+    .items-table td {
+        padding: 10px 6px;
+    }
+
+    .totals-box {
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .col-discount,
+    .items-table td:nth-child(4) {
+        display: none;
+    }
+    
+    .col-item { width: 45%; }
+    .col-price { width: 20%; }
+    .col-qty { width: 15%; }
+    .col-amount { width: 20%; }
+}
+    </style>
+</head>
+<body>
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <button class="btn btn-print" onclick="printInvoice()">
+            <span>🖨️</span> Print Invoice
+        </button>
+        <button class="btn btn-save" onclick="saveData()">
+            <span>💾</span> Save Data
+        </button>
+        <button class="btn btn-load" onclick="loadData()">
+            <span>📂</span> Load Saved
+        </button>
+        <button class="btn btn-new" onclick="createNew()">
+            <span>📄</span> New Invoice
+        </button>
+        <div class="file-input-wrapper">
+            <input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(event)">
+            <label for="logoInput" class="file-input-label">
+                <span>🖼️</span> Upload Logo
+            </label>
+        </div>
+    </div>
+
+    <!-- INVOICE PAGE -->
+    <div class="page-wrapper">
+        <!-- HEADER -->
+        <div class="invoice-header">
+            <div class="header-left">
+                <h1 class="invoice-title">INVOICE</h1>
+                <div class="company-info">
+                    <div class="company-name">Phoenix Technologies</div>
+                    <input type="text" class="field-input" id="companyStreet" value="Wole Omo Osho street, Egbeda, Lagos State">
+                    <input type="text" class="field-input" id="companyCityState" value="Lagos Lagos">
+                    <input type="text" class="field-input" id="companyCountryCode" value="NG">
+                    <input type="text" class="field-input" id="companyPhoneNumber" value="+2349124148470">
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="logo-wrapper">
+                    <div class="logo-placeholder" id="logoPlaceholder">
+                        Click "Upload Logo"<br>to add your logo
+                    </div>
+                    <img id="companyLogo" alt="Company Logo">
+                </div>
+            </div>
+        </div>
+
+        <!-- INFO GRID -->
+        <div class="info-container">
+            <div class="info-block">
+                <h3>Bill To</h3>
+                <input type="text" class="field-input strong" id="clientName" placeholder="Client Name">
+                <input type="text" class="field-input" id="clientPhone" placeholder="Phone Number">
+            </div>
+            <div class="info-block info-right">
+                <div class="detail-line">
+                    <span class="detail-label">Invoice Number</span>
+                    <input type="text" class="field-input" id="invoiceNum" value="3">
+                </div>
+                <div class="detail-line">
+                    <span class="detail-label">Issued</span>
+                    <input type="date" class="field-input" id="issuedDate" value="2026-01-19">
+                </div>
+                <div class="detail-line">
+                    <span class="detail-label">Due</span>
+                    <input type="date" class="field-input" id="dueDate" value="2026-01-26">
+                </div>
+            </div>
+        </div>
+
+        <div class="info-block">
+            <h3>Ship To</h3>
+            <input type="text" class="field-input" id="shipStreet" placeholder="Street Address">
+            <input type="text" class="field-input" id="shipCityState" placeholder="City, State">
+            <input type="text" class="field-input" id="shipCountry" placeholder="Country Code">
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div class="items-section">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th class="col-item">ITEM</th>
+                        <th class="col-price">PRICE</th>
+                        <th class="col-qty">QUANTITY</th>
+                        <th class="col-discount">DISCOUNT</th>
+                        <th class="col-amount">AMOUNT</th>
+                        <th class="col-actions"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    <!-- Items dynamically inserted -->
+                </tbody>
+            </table>
+
+            <button class="btn-add-item" onclick="addItem()">
+                <span>+</span> Add New Item
+            </button>
+        </div>
+
+        <!-- TOTALS -->
+        <div class="totals-container">
+            <div class="totals-box">
+                <div class="totals-row subtotal-row">
+                    <span>Subtotal</span>
+                    <span class="amount-value" id="subtotalDisplay">₦0.00</span>
+                </div>
+                <div class="totals-row total-row">
+                    <span>Total</span>
+                    <span class="amount-value" id="totalDisplay">₦0.00</span>
+                </div>
+                <div class="totals-row due-row">
+                    <span>Amount due</span>
+                    <span class="amount-value" id="dueDisplay">₦0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// ==================== STATE MANAGEMENT ====================
+let items = [
+    {
+        name: "10.24kwh Luxsun Lithium Battery",
+        description: "10.24Kwh Luxsun Lithium Battery. Pairs well with 48 volt inverter systems",
+        price: 1750000,
+        quantity: 1,
+        discount: 50000
+    },
+    {
+        name: "15.56kwh Luxsun Lithium Battery",
+        description: "15.56Kwh Luxsun Lithium Battery. Pairs well with 48 volt inverter systems",
+        price: 1950000,
+        quantity: 1,
+        discount: 50000
+    }
+];
+
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', () => {
+    renderItems();
+    recalculateTotals();
+    restoreLogo();
+});
+
+// =================== RENDER ITEMS ====================
+function renderItems() {
+    const tbody = document.getElementById('itemsBody');
+    tbody.innerHTML = '';
+
+    items.forEach((item, idx) => {
+        tbody.appendChild(buildItemRow(item, idx));
+    });
+
+    recalculateTotals();
+}
+
+function buildItemRow(item, idx) {
+    const tr = document.createElement('tr');
+    const itemAmount = (item.price * item.quantity) - item.discount;
+
+    tr.innerHTML = `
+        <td class="col-item">
+            <div class="item-content">
+                <input type="text" class="cell-input item-name-input" 
+                       value="${escapeHtml(item.name)}"
+                       onchange="updateField(${idx}, 'name', this.value)"
+                       placeholder="Item name">
+                <textarea class="cell-input cell-textarea item-desc-input"
+                          onchange="updateField(${idx}, 'description', this.value)"
+                          placeholder="Item description">${escapeHtml(item.description)}</textarea>
+            </div>
+        </td>
+        <td class="col-price align-right">
+            <input type="number" class="cell-input number-input" 
+                   value="${item.price}"
+                   onchange="updateField(${idx}, 'price', parseFloat(this.value) || 0)"
+                   step="0.01" min="0">
+        </td>
+        <td class="col-qty align-center">
+            <input type="number" class="cell-input qty-input" 
+                   value="${item.quantity}"
+                   onchange="updateField(${idx}, 'quantity', parseInt(this.value) || 1)"
+                   min="1">
+        </td>
+        <td class="col-discount align-right">
+            <input type="number" class="cell-input number-input" 
+                   value="${item.discount}"
+                   onchange="updateField(${idx}, 'discount', parseFloat(this.value) || 0)"
+                   step="0.01" min="0">
+        </td>
+        <td class="col-amount align-right">
+            <div class="amount-display">${formatMoney(itemAmount)}</div>
+        </td>
+        <td class="col-actions align-center">
+            <button class="btn-remove" onclick="removeItem(${idx})">✕</button>
+        </td>
+    `;
+
+    return tr;
+}
+
+// ==================== ITEM OPERATIONS ====================
+function updateField(idx, field, value) {
+    items[idx][field] = value;
+    renderItems();
+}
+
+function addItem() {
+    items.push({
+        name: "",
+        description: "",
+        price: 0,
+        quantity: 1,
+        discount: 0
+    });
+    renderItems();
+}
+
+function removeItem(idx) {
+    if (confirm('Remove this item?')) {
+        items.splice(idx, 1);
+        renderItems();
+    }
+}
+
+// ==================== CALCULATIONS ====================
+function recalculateTotals() {
+    let subtotal = 0;
+
+    items.forEach(item => {
+        const amount = (item.price * item.quantity) - item.discount;
+        subtotal += amount;
+    });
+
+    document.getElementById('subtotalDisplay').textContent = formatMoney(subtotal);
+    document.getElementById('totalDisplay').textContent = formatMoney(subtotal);
+    document.getElementById('dueDisplay').textContent = formatMoney(subtotal);
+}
+
+function formatMoney(value) {
+    return '₦' + value.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// ==================== LOGO MANAGEMENT ====================
+function handleLogoUpload(evt) {
+    const file = evt.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const logo = document.getElementById('companyLogo');
+            const placeholder = document.getElementById('logoPlaceholder');
+            
+            logo.src = e.target.result;
+            logo.classList.add('show');
+            placeholder.style.display = 'none';
+            
+            saveToLocalStorage('phoenix_logo', e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function restoreLogo() {
+    const saved = loadFromLocalStorage('phoenix_logo');
+    if (saved) {
+        const logo = document.getElementById('companyLogo');
+        const placeholder = document.getElementById('logoPlaceholder');
+        
+        logo.src = saved;
+        logo.classList.add('show');
+        placeholder.style.display = 'none';
+    }
+}
+
+// ==================== DATA PERSISTENCE ====================
+function saveData() {
+    const invoiceData = {
+        items: items,
+        companyStreet: document.getElementById('companyStreet').value,
+        companyCityState: document.getElementById('companyCityState').value,
+        companyCountryCode: document.getElementById('companyCountryCode').value,
+        companyPhoneNumber: document.getElementById('companyPhoneNumber').value,
+        clientName: document.getElementById('clientName').value,
+        clientPhone: document.getElementById('clientPhone').value,
+        shipStreet: document.getElementById('shipStreet').value,
+        shipCityState: document.getElementById('shipCityState').value,
+        shipCountry: document.getElementById('shipCountry').value,
+        invoiceNum: document.getElementById('invoiceNum').value,
+        issuedDate: document.getElementById('issuedDate').value,
+        dueDate: document.getElementById('dueDate').value
+    };
+
+    saveToLocalStorage('phoenix_invoice', JSON.stringify(invoiceData));
+    alert('✅ Invoice saved successfully!');
+}
+
+function loadData() {
+    const saved = loadFromLocalStorage('phoenix_invoice');
+    
+    if (saved) {
+        const data = JSON.parse(saved);
+        
+        items = data.items;
+        document.getElementById('companyStreet').value = data.companyStreet;
+        document.getElementById('companyCityState').value = data.companyCityState;
+        document.getElementById('companyCountryCode').value = data.companyCountryCode;
+        document.getElementById('companyPhoneNumber').value = data.companyPhoneNumber;
+        document.getElementById('clientName').value = data.clientName;
+        document.getElementById('clientPhone').value = data.clientPhone;
+        document.getElementById('shipStreet').value = data.shipStreet;
+        document.getElementById('shipCityState').value = data.shipCityState;
+        document.getElementById('shipCountry').value = data.shipCountry;
+        document.getElementById('invoiceNum').value = data.invoiceNum;
+        document.getElementById('issuedDate').value = data.issuedDate;
+        document.getElementById('dueDate').value = data.dueDate;
+        
+        renderItems();
+        alert('✅ Invoice loaded successfully!');
+    } else {
+        alert('❌ No saved invoice found!');
+    }
+}
+
+function createNew() {
+    if (confirm('Create new invoice? Unsaved data will be lost.')) {
+        items = [{
+            name: "",
+            description: "",
+            price: 0,
+            quantity: 1,
+            discount: 0
+        }];
+        
+        document.getElementById('clientName').value = '';
+        document.getElementById('clientPhone').value = '';
+        document.getElementById('shipStreet').value = '';
+        document.getElementById('shipCityState').value = '';
+        document.getElementById('shipCountry').value = '';
+        
+        const today = new Date().toISOString().split('T')[0];
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        
+        document.getElementById('invoiceNum').value = '';
+        document.getElementById('issuedDate').value = today;
+        document.getElementById('dueDate').value = nextWeek.toISOString().split('T')[0];
+        
+        renderItems();
+    }
+}
+
+// ==================== PRINT ====================
+function printInvoice() {
+    window.print();
+}
+
+// ==================== STORAGE UTILITIES ====================
+function saveToLocalStorage(key, data) {
+    try {
+        localStorage.setItem(key, data);
+    } catch (e) {
+        console.error('Storage error:', e);
+    }
+}
+
+function loadFromLocalStorage(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch (e) {
+        console.error('Storage error:', e);
+        return null;
+    }
+}
+
+// ==================== UTILITIES ====================
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+    </script>
+</body>
+</html>
